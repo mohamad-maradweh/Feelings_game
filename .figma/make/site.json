@@ -1,0 +1,10 @@
+{
+  "description": "An Arabic-first underwater adventure for teens to explore emotions, practice healthy responses, and find trusted support through interactive stories.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
