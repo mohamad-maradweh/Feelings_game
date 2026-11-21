@@ -525,6 +525,12 @@ button {
   transform: translateY(-2px);
   filter: brightness(1.12);
 }
+.cta:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+  filter: saturate(0.65);
+  transform: none;
+}
 .cta-secondary {
   color: #eafcff;
   background: linear-gradient(135deg, var(--ui-secondary-start), rgba(6, 50, 84, 0.7));
@@ -1375,6 +1381,27 @@ button {
   width: 100%;
   margin-top: 18px;
 }
+.map-completion-cta {
+  position: absolute;
+  z-index: 20;
+  left: 50%;
+  bottom: 26px;
+  transform: translateX(-50%);
+  min-height: 46px;
+  padding: 0 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid rgba(154, 255, 251, 0.46);
+  border-radius: 999px;
+  color: #eaffff;
+  background: linear-gradient(135deg, rgba(20, 137, 157, 0.9), rgba(88, 67, 158, 0.9));
+  box-shadow: 0 10px 34px rgba(1, 18, 40, 0.46), 0 0 22px rgba(54, 214, 208, 0.24);
+  font-weight: 800;
+}
+.map-completion-cta:hover {
+  filter: brightness(1.12);
+}
 .panel-kicker {
   font-size: calc(10px * var(--text-scale));
   color: #7de9e8;
@@ -1829,6 +1856,43 @@ button {
   justify-content: center;
   margin-top: 18px;
 }
+.closure-copy {
+  width: min(780px, 90vw);
+}
+.closing-tips {
+  display: grid;
+  gap: 10px;
+  margin-top: 20px;
+  text-align: start;
+}
+.closing-tips article {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid rgba(99, 224, 222, 0.18);
+  border-radius: 14px;
+  background: rgba(3, 31, 59, 0.48);
+}
+.closing-tips article > svg {
+  flex: 0 0 auto;
+  color: #74efea;
+  margin-top: 2px;
+}
+.closing-tips strong {
+  display: block;
+  color: #f2ffff;
+  font-size: calc(14px * var(--text-scale));
+}
+.closing-tips p {
+  margin: 3px 0 0;
+  color: #a9c6d0;
+  font-size: calc(12px * var(--text-scale));
+  line-height: 1.55;
+}
+.closure-actions {
+  margin-top: 20px !important;
+}
 
 /* Calm and support */
 .calm-layout {
@@ -2270,6 +2334,37 @@ button {
 }
 .speech > p {
   color: #a9c6ce;
+}
+.guardian-steps {
+  display: grid;
+  gap: 9px;
+  margin-top: 16px;
+  text-align: start;
+}
+.guardian-steps article {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 13px;
+  border-radius: 13px;
+  background: rgba(3, 31, 59, 0.42);
+  border: 1px solid rgba(104, 220, 220, 0.16);
+}
+.guardian-steps article > span {
+  color: #6fe9e5;
+  font: 800 11px Manrope, sans-serif;
+  letter-spacing: 0.08em;
+}
+.guardian-steps strong {
+  display: block;
+  color: #efffff;
+  font-size: calc(13px * var(--text-scale));
+}
+.guardian-steps p {
+  margin: 2px 0 0;
+  color: #a9c6ce;
+  font-size: calc(12px * var(--text-scale));
+  line-height: 1.5;
 }
 .speech .actions {
   justify-content: center;
@@ -3325,6 +3420,14 @@ button {
   .map-panel .cta {
     margin-top: 10px;
     min-height: 48px;
+  }
+  .map-completion-cta {
+    bottom: 15px;
+    max-width: calc(100vw - 112px);
+    min-height: 42px;
+    padding: 0 14px;
+    font-size: calc(12px * var(--text-scale));
+    white-space: nowrap;
   }
   .map-controls {
     inset-inline-start: 10px;

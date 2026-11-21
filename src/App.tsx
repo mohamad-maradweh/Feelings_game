@@ -1,4 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  coreScenarioIds,
+  scenarioContent,
+  scenarioContents,
+  type ScenarioContent,
+} from "./content/scenarios";
 
 type Language = "ar" | "en";
 
@@ -23,6 +29,7 @@ type Screen =
   | "emotion"
   | "behavior"
   | "outcome"
+  | "closure"
   | "calm"
   | "support"
   | "guardian"
@@ -61,6 +68,7 @@ const screenMeta: Array<{ id: Screen; label: string; group: string }> = [
   { id: "emotion", label: "سؤال الشعور", group: "الرحلة" },
   { id: "behavior", label: "اختيار التصرف", group: "الرحلة" },
   { id: "outcome", label: "النتيجة والتأمل", group: "الرحلة" },
+  { id: "closure", label: "رسالة الختام", group: "الرحلة" },
   { id: "calm", label: "مرسى الهدوء", group: "الدعم" },
   { id: "support", label: "طلب المساعدة", group: "الدعم" },
   { id: "guardian", label: "التحدث مع ولي الأمر", group: "الدعم" },
@@ -78,6 +86,7 @@ const art: Partial<Record<Screen, string>> = {
   emotion: "/assets/emotion-art.jpg",
   behavior: "/assets/behavior-art.jpg",
   outcome: "/assets/outcome-art.jpg",
+  closure: "/assets/outcome-art.jpg",
   calm: "/assets/quiet-sanctuary.jpg",
   support: "/assets/quiet-sanctuary.jpg",
   guardian: "/assets/guardian-art.jpg",
@@ -193,14 +202,20 @@ function Button({
   onClick,
   secondary = false,
   icon,
+  disabled = false,
 }: {
   children: React.ReactNode;
   onClick?: () => void;
   secondary?: boolean;
   icon?: IconName;
+  disabled?: boolean;
 }) {
   return (
-    <button className={`cta ${secondary ? "cta-secondary" : ""}`} onClick={onClick}>
+    <button
+      className={`cta ${secondary ? "cta-secondary" : ""}`}
+      onClick={onClick}
+      disabled={disabled}
+    >
       {children}
       {icon && <Icon name={icon} />}
     </button>
@@ -547,6 +562,7 @@ type Scenario = MapSignal & {
   internalTitle: string;
   status: ScenarioStatus;
   mysteryHint?: string;
+  mysteryHintEn?: string;
   summary?: string;
 };
 
@@ -577,19 +593,18 @@ const scenarioStatusLabels: Record<ScenarioStatus, string> = {
   archived: "مؤرشف",
 };
 
-const initialScenarios: Scenario[] = Array.from({ length: 12 }, (_, index) => {
-  const number = index + 1;
-  const titles = ["اختبار مفاجئ", "رسالة لم يُرد عليها", "تغيير في الخطط", "مقعد جديد"];
-  return {
-    id: number,
-    internalTitle: titles[index] ?? `موقف جديد ${number}`,
-    label: index % mysteryLabels.ar.length,
-    duration: [5, 7, 8, 10][index % 4],
-    state: index === 2 ? "started" : index < 2 ? "complete" : "available",
-    region: index % mapRegions.length,
-    status: "published",
-  };
-});
+const initialScenarios: Scenario[] = scenarioContents.map((content, index) => ({
+  id: content.id,
+  internalTitle: content.internalTitle.ar,
+  label: index % mysteryLabels.ar.length,
+  mysteryHint: content.mystery.label.ar,
+  mysteryHintEn: content.mystery.label.en,
+  summary: content.scene.body.ar,
+  duration: [6, 7, 6][index] ?? 6,
+  state: "available",
+  region: [0, 2, 1][index] ?? 0,
+  status: "published",
+}));
 
 const createScenarioDraft = (): ScenarioDraft => ({
   internalTitle: "اختبار مفاجئ في المدرسة",
@@ -637,10 +652,14 @@ function MapScreen({
   setScreen,
   language,
   scenarios,
+  onStartScenario,
+  canFinishJourney,
 }: {
   setScreen: (s: Screen) => void;
   language: Language;
   scenarios: Scenario[];
+  onStartScenario: (id: number) => void;
+  canFinishJourney: boolean;
 }) {
   const english = language === "en";
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -655,8 +674,10 @@ function MapScreen({
   const [progress, setProgress] = useState(0);
   const [search, setSearch] = useState("");
   const [region, setRegion] = useState<number | null>(null);
-  const signalLabel = (signal: Pick<Scenario, "label" | "mysteryHint">) =>
-    signal.mysteryHint?.trim() || mysteryLabels[language][signal.label];
+  const signalLabel = (signal: Pick<Scenario, "label" | "mysteryHint" | "mysteryHintEn">) =>
+    language === "en"
+      ? signal.mysteryHintEn?.trim() || mysteryLabels.en[signal.label]
+      : signal.mysteryHint?.trim() || mysteryLabels.ar[signal.label];
   const canvasHeight = Math.max(2800, (publishedSignals.length + 1) * 180);
   const route = useMemo(
     () => buildRouteLayout(publishedSignals.length, canvasHeight),
@@ -873,10 +894,26 @@ function MapScreen({
             <Icon name="heart" size={15} />{" "}
             {english ? "You can leave at any time." : "يمكنك المغادرة في أي وقت."}
           </small>
-          <Button onClick={() => setScreen("mystery")} icon="arrow">
-            {english ? "Explore situation" : "اكتشف الموقف"}
+          <Button
+            onClick={() => onStartScenario(selected.id)}
+            icon="arrow"
+            disabled={!scenarioContent[selected.id]}
+          >
+            {scenarioContent[selected.id]
+              ? english
+                ? "Explore situation"
+                : "اكتشف الموقف"
+              : english
+                ? "Content being prepared"
+                : "المحتوى قيد التجهيز"}
           </Button>
         </aside>
+      )}
+      {canFinishJourney && (
+        <button className="map-completion-cta" onClick={() => setScreen("closure")}>
+          <Icon name="spark" size={18} />
+          <span>{english ? "Finish your journey" : "أكمل رحلتك"}</span>
+        </button>
       )}
       <div className="map-controls">
         <button onClick={() => zoomBy(0.12)} aria-label={english ? "Zoom in" : "تكبير"}>
@@ -914,7 +951,15 @@ function JourneyTitle({ step, title }: { step: string; title: string }) {
   );
 }
 
-function Mystery({ setScreen, language }: { setScreen: (s: Screen) => void; language: Language }) {
+function Mystery({
+  setScreen,
+  language,
+  scenario,
+}: {
+  setScreen: (s: Screen) => void;
+  language: Language;
+  scenario: ScenarioContent;
+}) {
   const english = language === "en";
   return (
     <section className="journey-centered">
@@ -925,15 +970,9 @@ function Mystery({ setScreen, language }: { setScreen: (s: Screen) => void; lang
       <div className="mystery-card glass-panel">
         <span className="mystery-mark">؟</span>
         <div>
-          <div className="eyebrow">{english ? "A new signal has arrived" : "وصلت إشارة جديدة"}</div>
-          <h2>
-            {english ? "Something unexpected is waiting for Nova" : "شيء غير متوقّع ينتظر نوفا"}
-          </h2>
-          <p>
-            {english
-              ? "Approach calmly. You can pause or return to the map at any time."
-              : "اقترب بهدوء. يمكنك التوقف أو العودة إلى الخريطة في أي لحظة."}
-          </p>
+          <div className="eyebrow">{scenario.mystery.eyebrow[language]}</div>
+          <h2>{scenario.mystery.title[language]}</h2>
+          <p>{scenario.mystery.body[language]}</p>
         </div>
         <div className="actions">
           <Button onClick={() => setScreen("scene")} icon="arrow">
@@ -948,22 +987,26 @@ function Mystery({ setScreen, language }: { setScreen: (s: Screen) => void; lang
   );
 }
 
-function Scene({ setScreen, language }: { setScreen: (s: Screen) => void; language: Language }) {
+function Scene({
+  setScreen,
+  language,
+  scenario,
+}: {
+  setScreen: (s: Screen) => void;
+  language: Language;
+  scenario: ScenarioContent;
+}) {
   const english = language === "en";
   return (
     <section className="scene-layout">
       <JourneyTitle
         step={english ? "STEP 02" : "المحطة 02"}
-        title={english ? "An unexpected moment" : "لحظة مفاجئة"}
+        title={scenario.scene.heading[language]}
       />
       <div className="cinema-frame">
         <div className="caption">
           <span>{english ? "THE SCENE" : "المشهد"}</span>
-          <p>
-            {english
-              ? "The teacher suddenly announced a short test. Nova did not expect it."
-              : "أعلنت المعلمة فجأة عن اختبار قصير. لم تكن نوفا تتوقعه."}
-          </p>
+          <p>{scenario.scene.body[language]}</p>
         </div>
         <div className="video-controls">
           <button>
@@ -983,134 +1026,122 @@ function Scene({ setScreen, language }: { setScreen: (s: Screen) => void; langua
   );
 }
 
-const emotions = [
-  {
-    name: { ar: "قلق", en: "Anxiety" },
-    note: {
-      ar: "الجسم متوتر والأفكار سريعة",
-      en: "My body feels tense and my thoughts are racing.",
-    },
-    symbol: "≈",
-  },
-  {
-    name: { ar: "تحدٍ", en: "A challenge" },
-    note: { ar: "أستطيع أن أحاول خطوة خطوة", en: "I can try one step at a time." },
-    symbol: "◇",
-  },
-  {
-    name: { ar: "لامبالاة", en: "Indifference" },
-    note: { ar: "لا يهمني ما سيحدث", en: "It does not matter what happens." },
-    symbol: "—",
-  },
-];
-
-function Emotion({ setScreen, language }: { setScreen: (s: Screen) => void; language: Language }) {
+function Emotion({
+  setScreen,
+  language,
+  scenario,
+  selectedEmotion,
+  setSelectedEmotion,
+}: {
+  setScreen: (s: Screen) => void;
+  language: Language;
+  scenario: ScenarioContent;
+  selectedEmotion: string | null;
+  setSelectedEmotion: (emotionId: string | null) => void;
+}) {
   const english = language === "en";
-  const [selected, setSelected] = useState<number | null>(null);
   return (
     <section className="choice-layout">
       <JourneyTitle
         step={english ? "STEP 03" : "المحطة 03"}
-        title={
-          english ? "What might Nova be feeling right now?" : "ماذا تشعر الشخصية في هذه اللحظة؟"
-        }
+        title={scenario.emotion.question[language]}
       />
-      <p className="question-hint">
-        {english
-          ? "Notice facial expressions, thoughts, and what is happening in the body."
-          : "لاحظ تعابير الوجه، الأفكار، وما يحدث داخل الجسد."}
-      </p>
+      <p className="question-hint">{scenario.emotion.hint[language]}</p>
       <div className="choice-grid emotion-grid">
-        {emotions.map((item, i) => (
+        {scenario.emotion.options.map((item, i) => (
           <button
-            key={item.name.ar}
-            className={`choice-card glass-panel ${selected === i ? "selected" : ""}`}
-            onClick={() => setSelected(i)}
+            key={item.id}
+            className={`choice-card glass-panel ${selectedEmotion === item.id ? "selected" : ""}`}
+            onClick={() => setSelectedEmotion(item.id)}
           >
             <span className="choice-index">0{i + 1}</span>
             <i>{item.symbol}</i>
             <h2>{item.name[language]}</h2>
             <p>{item.note[language]}</p>
-            <span className="radio">{selected === i && <Icon name="check" size={16} />}</span>
+            <span className="radio">
+              {selectedEmotion === item.id && <Icon name="check" size={16} />}
+            </span>
           </button>
         ))}
       </div>
-      <Button onClick={() => selected !== null && setScreen("behavior")} icon="arrow">
+      <Button
+        onClick={() => selectedEmotion !== null && setScreen("behavior")}
+        icon="arrow"
+        disabled={selectedEmotion === null}
+      >
         {english ? "Confirm feeling" : "تأكيد الشعور"}
       </Button>
     </section>
   );
 }
 
-const behaviors = [
-  {
-    name: { ar: "الابتعاد وتجنّب الاختبار", en: "Step away and avoid the test" },
-    note: {
-      ar: "قد يخف الضغط الآن، لكنه يبقى لاحقاً.",
-      en: "The pressure may ease now, but it can stay with me later.",
-    },
-    tag: { ar: "تجنّب", en: "Avoid" },
-  },
-  {
-    name: { ar: "الرد بعصبية", en: "React angrily" },
-    note: {
-      ar: "أعبّر عن انزعاجي، لكن قد أؤذي الآخرين.",
-      en: "I express my upset, but I may hurt other people.",
-    },
-    tag: { ar: "اندفاع", en: "Impulse" },
-  },
-  {
-    name: { ar: "أتوقف، أتنفس، وأبدأ بالأسهل", en: "Pause, breathe, and start with the easiest" },
-    note: {
-      ar: "أمنح نفسي لحظة وأتحرك خطوة خطوة.",
-      en: "I give myself a moment and move one step at a time.",
-    },
-    tag: { ar: "تنظيم", en: "Regulate" },
-  },
-];
-
-function Behavior({ setScreen, language }: { setScreen: (s: Screen) => void; language: Language }) {
+function Behavior({
+  setScreen,
+  language,
+  scenario,
+  selectedAction,
+  setSelectedAction,
+}: {
+  setScreen: (s: Screen) => void;
+  language: Language;
+  scenario: ScenarioContent;
+  selectedAction: string | null;
+  setSelectedAction: (actionId: string | null) => void;
+}) {
   const english = language === "en";
-  const [selected, setSelected] = useState<number | null>(2);
   return (
     <section className="choice-layout">
       <JourneyTitle
         step={english ? "STEP 04" : "المحطة 04"}
-        title={english ? "What could Nova do now?" : "ماذا يمكن أن تفعل نوفا الآن؟"}
+        title={scenario.behavior.question[language]}
       />
-      <p className="question-hint">
-        {english
-          ? "Each choice creates a different ripple. There is no perfect answer."
-          : "كل اختيار يصنع موجة مختلفة. لا توجد إجابة مثالية."}
-      </p>
+      <p className="question-hint">{scenario.behavior.hint[language]}</p>
       <div className="choice-grid behavior-grid">
-        {behaviors.map((item, i) => (
+        {scenario.behavior.options.map((item, i) => (
           <button
-            key={item.name.ar}
-            className={`choice-card behavior-card glass-panel ${selected === i ? "selected" : ""}`}
-            onClick={() => setSelected(i)}
+            key={item.id}
+            className={`choice-card behavior-card glass-panel ${selectedAction === item.id ? "selected" : ""}`}
+            onClick={() => setSelectedAction(item.id)}
           >
             <span className="tag">{item.tag[language]}</span>
             <span className="choice-index">0{i + 1}</span>
             <div className="behavior-icon">
-              {i === 2 ? <Icon name="pause" /> : i === 1 ? "!" : "↗"}
+              {item.icon === "regulate" ? <Icon name="pause" /> : item.icon === "impulse" ? "!" : "↗"}
             </div>
             <h2>{item.name[language]}</h2>
             <p>{item.note[language]}</p>
-            <span className="radio">{selected === i && <Icon name="check" size={16} />}</span>
+            <span className="radio">
+              {selectedAction === item.id && <Icon name="check" size={16} />}
+            </span>
           </button>
         ))}
       </div>
-      <Button onClick={() => selected !== null && setScreen("outcome")} icon="arrow">
+      <Button
+        onClick={() => selectedAction !== null && setScreen("outcome")}
+        icon="arrow"
+        disabled={selectedAction === null}
+      >
         {english ? "See the ripple effect" : "شاهد أثر الموجة"}
       </Button>
     </section>
   );
 }
 
-function Outcome({ setScreen, language }: { setScreen: (s: Screen) => void; language: Language }) {
+function Outcome({
+  language,
+  scenario,
+  selectedAction,
+  onComplete,
+}: {
+  language: Language;
+  scenario: ScenarioContent;
+  selectedAction: string | null;
+  onComplete: (destination: Screen) => void;
+}) {
   const english = language === "en";
   const [reflection, setReflection] = useState("");
+  const action =
+    scenario.behavior.options.find((item) => item.id === selectedAction) ?? scenario.behavior.options[0];
   return (
     <section className="outcome-layout">
       <JourneyTitle
@@ -1121,15 +1152,11 @@ function Outcome({ setScreen, language }: { setScreen: (s: Screen) => void; lang
         <div className="success-mark">
           <Icon name="spark" size={30} />
         </div>
-        <span>{english ? "One small step made a difference" : "خطوة صغيرة صنعت فرقاً"}</span>
-        <h2>{english ? "Focus returned one step at a time." : "عاد التركيز خطوة خطوة."}</h2>
-        <p>
-          {english
-            ? "The anxiety did not disappear completely, but Nova found space to begin."
-            : "لم يختف القلق تماماً، لكن نوفا وجدت مساحة للبدء."}
-        </p>
+        <span>{action.outcome.eyebrow[language]}</span>
+        <h2>{action.outcome.title[language]}</h2>
+        <p>{action.outcome.body[language]}</p>
         <label>
-          {english ? "What could help you next time?" : "ما الذي قد يساعدك أنت في المرة القادمة؟"}
+          {scenario.reflectionPrompt[language]}
           <textarea
             value={reflection}
             onChange={(e) => setReflection(e.target.value)}
@@ -1139,11 +1166,71 @@ function Outcome({ setScreen, language }: { setScreen: (s: Screen) => void; lang
           />
         </label>
         <div className="actions">
-          <Button onClick={() => setScreen("map")} icon="compass">
+          <Button onClick={() => onComplete("map")} icon="compass">
             {english ? "Return to map" : "العودة إلى الخريطة"}
           </Button>
-          <Button onClick={() => setScreen("calm")} secondary icon="heart">
+          <Button onClick={() => onComplete("calm")} secondary icon="heart">
             {english ? "Quiet Space" : "مساحة هادئة"}
+          </Button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Closure({ setScreen, language }: { setScreen: (s: Screen) => void; language: Language }) {
+  const english = language === "en";
+  const tips = english
+    ? [
+        ["Your feelings make sense", "Feelings are signals that deserve your attention, not proof of weakness."],
+        ["Pause before you react", "Try 4 seconds in, 4 seconds hold, and 4 seconds out."],
+        ["You do not have to carry it alone", "Sharing with a trusted person can make the next step clearer."],
+      ]
+    : [
+        ["مشاعرك طبيعية ومفهومة", "المشاعر رسائل تحتاج إلى انتباهك، وليست دليلاً على الضعف."],
+        ["توقّف لثوانٍ قبل رد الفعل", "جرّب 4 ثوانٍ شهيق، 4 ثوانٍ حبس، و4 ثوانٍ زفير."],
+        ["لست مضطراً لحل كل شيء وحدك", "مشاركة ما تشعر به مع شخص تثق به قد توضح لك الخطوة التالية."],
+      ];
+  return (
+    <section className="outcome-layout closure-layout" dir={english ? "ltr" : "rtl"}>
+      <JourneyTitle
+        step={english ? "YOUR JOURNEY" : "رحلتك"}
+        title={english ? "A message to carry with you" : "رسالة الختام"}
+      />
+      <div className="outcome-copy glass-panel closure-copy">
+        <div className="success-mark">
+          <Icon name="spark" size={30} />
+        </div>
+        <span>{english ? "YOU TOOK A PAUSE" : "أعطيت نفسك مساحة"}</span>
+        <h2>{english ? "Thank you for taking time to understand your feelings." : "شكراً لأنك منحت نفسك وقتاً لتفهم مشاعرك."}</h2>
+        <p>
+          {english
+            ? "There is no wrong feeling. You can protect yourself and express what is inside you in a healthy way. You are not alone, and asking for help is a step toward strength and safety."
+            : "لا يوجد شعور خاطئ. يمكنك حماية نفسك والتعبير عما بداخلك بطريقة صحية. أنت لست وحدك، وطلب المساعدة خطوة نحو القوة والأمان."}
+        </p>
+        <div className="closing-tips">
+          {tips.map(([title, copy]) => (
+            <article key={title}>
+              <Icon name="heart" size={18} />
+              <div>
+                <strong>{title}</strong>
+                <p>{copy}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+        <div className="actions closure-actions">
+          <Button onClick={() => setScreen("calm")} icon="heart">
+            {english ? "Quiet Space" : "مساحة هادئة"}
+          </Button>
+          <Button onClick={() => setScreen("support")} secondary icon="help">
+            {english ? "Ask for support" : "خيارات الدعم"}
+          </Button>
+          <Button onClick={() => setScreen("guardian")} secondary icon="person">
+            {english ? "Talk to a guardian" : "كيف أخبر ولي أمري؟"}
+          </Button>
+          <Button onClick={() => setScreen("map")} secondary icon="compass">
+            {english ? "Return to map" : "العودة إلى الخريطة"}
           </Button>
         </div>
       </div>
@@ -1286,9 +1373,13 @@ function Calm({ setScreen, language }: { setScreen: (s: Screen) => void; languag
 const supportActions = {
   ar: [
     ["person", "تحدث مع شخص تثق به", "اختر شخصاً يصغي إليك ويحترم ما تشعر به."],
-    ["home", "الدعم في المنزل", "يمكنك البدء بجملة قصيرة: أحتاج أن نتحدث بهدوء."],
-    ["school", "الدعم في المدرسة", "تحدث مع مرشد أو معلم أو ممرضة المدرسة."],
-    ["heart", "متى أطلب المساعدة؟", "عندما يستمر الشعور، أو يؤثر في يومك، أو لا تشعر بالأمان."],
+    ["home", "الدعم في المنزل", "تحدث مع أحد الوالدين، أخ أو أخت أكبر، أو بالغ قريب تثق بحكمته وحرصه عليك."],
+    ["school", "الدعم في المدرسة", "تحدث مع المرشد الطلابي أو الأخصائي النفسي/الاجتماعي أو معلم تفضله."],
+    [
+      "heart",
+      "متى أطلب المساعدة؟",
+      "إذا استمر الحزن أو الخوف أو التوتر أكثر من أسبوعين وأثر في نومك أو أكلك أو تركيزك، أو واجهت تنمراً أو تهديداً أو شعرت بعدم الأمان. أخبر بالغاً موثوقاً فوراً إذا شعرت برغبة في إيذاء نفسك أو فقدت السيطرة.",
+    ],
   ],
   en: [
     [
@@ -1296,12 +1387,20 @@ const supportActions = {
       "Talk to someone you trust",
       "Choose someone who listens and respects how you feel.",
     ],
-    ["home", "Support at home", "You can begin with: I need us to talk calmly."],
-    ["school", "Support at school", "Talk to a counselor, teacher, or school nurse."],
+    [
+      "home",
+      "Support at home",
+      "Talk to a parent, an older sibling, or another trusted adult who cares about you.",
+    ],
+    [
+      "school",
+      "Support at school",
+      "Talk to a school counselor, social or mental-health specialist, or a teacher you trust.",
+    ],
     [
       "heart",
       "When should I ask for help?",
-      "When the feeling lasts, affects your day, or you do not feel safe.",
+      "When sadness, fear, or stress lasts more than two weeks and affects sleep, eating, or focus; when there is bullying, a threat, or you do not feel safe. Tell a trusted adult right away if you want to hurt yourself or feel out of control.",
     ],
   ],
 };
@@ -1358,6 +1457,17 @@ function Support({ setScreen, language }: { setScreen: (s: Screen) => void; lang
 
 function Guardian({ setScreen, language }: { setScreen: (s: Screen) => void; language: Language }) {
   const english = language === "en";
+  const steps = english
+    ? [
+        ["Choose a calm time", "Ask when your guardian is not busy or stressed: “Do you have 10 minutes to talk calmly?”"],
+        ["Start with how you feel", "Use “I feel…” instead of blaming someone or listing their mistakes."],
+        ["Say what you need", "Be clear whether you want someone to listen, help you feel safe, or help find a solution."],
+      ]
+    : [
+        ["اختر وقتاً هادئاً", "اطلب الحديث عندما لا يكون ولي أمرك مشغولاً أو متوتراً: «هل لديك 10 دقائق نتحدث فيها بهدوء؟»"],
+        ["ابدأ بما تشعر به", "استخدم جملة «أنا أشعر…» بدلاً من اللوم أو الحديث عن أخطاء الآخرين."],
+        ["حدّد ما تحتاجه", "وضّح إن كنت تحتاج من يستمع إليك، أو يساعدك على الشعور بالأمان، أو يساعدك في إيجاد حل."],
+      ];
   return (
     <section className="guardian-layout">
       <JourneyTitle
@@ -1381,6 +1491,17 @@ function Guardian({ setScreen, language }: { setScreen: (s: Screen) => void; lan
             ? "You can say it out loud, write it down, or send it in a message."
             : "يمكنك قولها بصوتك، كتابتها، أو إرسالها في رسالة."}
         </p>
+        <div className="guardian-steps">
+          {steps.map(([title, copy], index) => (
+            <article key={title}>
+              <span>0{index + 1}</span>
+              <div>
+                <strong>{title}</strong>
+                <p>{copy}</p>
+              </div>
+            </article>
+          ))}
+        </div>
         <div className="actions">
           <Button onClick={() => setScreen("calm")} icon="arrow">
             {english ? "Return to Quiet Space" : "العودة للمساحة الهادئة"}
@@ -1732,7 +1853,7 @@ function AdminBuilder({
           {step === 4 && (
             <>
               <h2>خيارات التصرف والنتائج</h2>
-              {behaviors.map((b, i) => (
+              {scenarioContents[0].behavior.options.map((b, i) => (
                 <div className="compact-choice" key={b.name.ar}>
                   <b>الخيار {i + 1}</b>
                   <input defaultValue={b.name.ar} />
@@ -1957,6 +2078,9 @@ export default function App() {
     useState<AccessibilitySettings>(getInitialAccessibility);
   const [scenarios, setScenarios] = useState<Scenario[]>(initialScenarios);
   const [draft, setDraft] = useState<ScenarioDraft>(createScenarioDraft);
+  const [activeScenarioId, setActiveScenarioId] = useState<number>(coreScenarioIds[0]);
+  const [selectedEmotion, setSelectedEmotion] = useState<string | null>(null);
+  const [selectedAction, setSelectedAction] = useState<string | null>(null);
   const [arriving, setArriving] = useState(false);
   const [language, setLanguage] = useState<Language>("ar");
   const [guideOpen, setGuideOpen] = useState(false);
@@ -2013,6 +2137,25 @@ export default function App() {
     setDraft(createScenarioDraft());
     changeScreen("map");
   };
+  const startScenario = (id: number) => {
+    if (!scenarioContent[id]) return;
+    setActiveScenarioId(id);
+    setSelectedEmotion(null);
+    setSelectedAction(null);
+    changeScreen("mystery");
+  };
+  const completeScenario = (destination: Screen) => {
+    setScenarios((current) =>
+      current.map((scenario) =>
+        scenario.id === activeScenarioId ? { ...scenario, state: "complete" } : scenario,
+      ),
+    );
+    changeScreen(destination);
+  };
+  const activeScenario = scenarioContent[activeScenarioId] ?? scenarioContent[coreScenarioIds[0]];
+  const canFinishJourney = coreScenarioIds.every(
+    (id) => scenarios.find((scenario) => scenario.id === id)?.state === "complete",
+  );
   let content: React.ReactNode;
   if (screen === "splash")
     content = <Splash onComplete={completeIntro} reduced={accessibility.reduceMotion} />;
@@ -2027,12 +2170,43 @@ export default function App() {
     const props = { setScreen: changeScreen };
     const screens: Record<string, React.ReactNode> = {
       landing: <Landing {...props} {...{ language, guideOpen, setGuideOpen }} />,
-      map: <MapScreen {...props} language={language} scenarios={scenarios} />,
-      mystery: <Mystery {...props} language={language} />,
-      scene: <Scene {...props} language={language} />,
-      emotion: <Emotion {...props} language={language} />,
-      behavior: <Behavior {...props} language={language} />,
-      outcome: <Outcome {...props} language={language} />,
+      map: (
+        <MapScreen
+          {...props}
+          {...{ language, scenarios, onStartScenario: startScenario, canFinishJourney }}
+        />
+      ),
+      mystery: <Mystery {...props} {...{ language, scenario: activeScenario }} />,
+      scene: <Scene {...props} {...{ language, scenario: activeScenario }} />,
+      emotion: (
+        <Emotion
+          {...props}
+          {...{
+            language,
+            scenario: activeScenario,
+            selectedEmotion,
+            setSelectedEmotion,
+          }}
+        />
+      ),
+      behavior: (
+        <Behavior
+          {...props}
+          {...{
+            language,
+            scenario: activeScenario,
+            selectedAction,
+            setSelectedAction,
+          }}
+        />
+      ),
+      outcome: (
+        <Outcome
+          {...props}
+          {...{ language, scenario: activeScenario, selectedAction, onComplete: completeScenario }}
+        />
+      ),
+      closure: <Closure {...props} language={language} />,
       calm: <Calm {...props} language={language} />,
       support: <Support {...props} language={language} />,
       guardian: <Guardian {...props} language={language} />,
