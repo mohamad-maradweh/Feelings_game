@@ -3912,3 +3912,493 @@ button {
     width: 100%;
   }
 }
+
+/* Mobile interaction refinement: keep the established visual language while
+   providing dependable touch targets and preventing fixed panels from hiding
+   important content on compact screens. */
+@media (max-width: 700px) {
+  .player-header {
+    padding-inline: max(12px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-right));
+  }
+  .player-header nav {
+    gap: 6px;
+  }
+  .icon-button {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+  }
+  .language {
+    min-height: 44px;
+    padding-inline: 10px;
+  }
+  .accessibility-panel {
+    top: 66px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    max-height: none;
+  }
+  .access-panel-head button,
+  .text-size-control button,
+  .color-vision-control button {
+    min-height: 44px;
+  }
+  .access-panel-head button {
+    width: 44px;
+    height: 44px;
+  }
+  .guide-overlay {
+    padding-inline-end: 62px;
+  }
+  .guide-close {
+    top: 12px;
+    inset-inline-end: 12px;
+    width: 44px;
+    height: 44px;
+  }
+  .access-toggle {
+    min-height: 44px;
+  }
+  .map-toolbar label,
+  .map-quiet-link {
+    min-height: 44px;
+    height: 44px;
+  }
+  .map-viewport {
+    overscroll-behavior-y: contain;
+  }
+  .map-panel {
+    padding-inline-end: 62px;
+  }
+  .panel-close {
+    top: 7px;
+    inset-inline-end: 7px;
+    width: 44px;
+    height: 44px;
+  }
+  .map-controls {
+    grid-template-columns: repeat(3, 44px);
+  }
+  .map-controls button {
+    width: 44px;
+    height: 44px;
+  }
+  .map-state-switcher button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .map-completion-cta {
+    min-height: 44px;
+  }
+  .screen-nav-panel section button {
+    min-height: 44px;
+  }
+}
+
+/* The smallest common phone needs less decorative whitespace, not smaller
+   content. This keeps both landing actions in the first viewport. */
+@media (max-width: 360px) and (max-height: 640px) {
+  .landing-layout {
+    padding-top: 27vh;
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+  .landing-copy {
+    padding: 15px 14px;
+  }
+  .landing-copy h1 {
+    font-size: calc(28px * var(--text-scale));
+  }
+  .landing-copy h2 {
+    font-size: calc(19px * var(--text-scale));
+  }
+  .landing-copy > p {
+    line-height: 1.55;
+    margin-bottom: 9px;
+  }
+}
+
+/* Landscape phones have very little usable height. These rules retain the
+   existing underwater composition while ensuring the next action remains in
+   view rather than being pushed below the fold. */
+@media (max-width: 900px) and (max-height: 540px) and (orientation: landscape) {
+  .player-header {
+    height: 60px;
+    padding-inline: clamp(14px, 3vw, 30px);
+  }
+  .player-header nav {
+    gap: 6px;
+  }
+  .icon-button,
+  .language {
+    min-height: 40px;
+    height: 40px;
+  }
+  .icon-button {
+    min-width: 40px;
+    width: 40px;
+  }
+  .language {
+    padding-inline: 10px;
+  }
+  .accessibility-panel {
+    top: 66px;
+    bottom: 10px;
+    max-height: none;
+  }
+
+  .landing-layout {
+    min-height: calc(100svh - 60px);
+    padding: 12px clamp(24px, 6vw, 64px) 14px;
+    align-items: center;
+  }
+  .screen-landing .art-layer {
+    background-size: auto 128%;
+    background-position: 22% 50%;
+  }
+  .landing-copy {
+    width: min(510px, 54vw);
+    padding: 14px 16px;
+  }
+  .landing-copy h1 {
+    font-size: calc(27px * var(--text-scale));
+    margin-bottom: 2px;
+  }
+  .landing-copy h2 {
+    font-size: calc(17px * var(--text-scale));
+    margin-bottom: 4px;
+  }
+  .landing-copy > p {
+    margin-bottom: 8px;
+    font-size: calc(11px * var(--text-scale));
+    line-height: 1.45;
+  }
+  .landing-copy .actions {
+    gap: 8px;
+  }
+  .landing-copy .cta {
+    min-height: 44px;
+    padding-inline: 12px;
+  }
+  .landing-footer {
+    display: none;
+  }
+
+  .map-layout {
+    height: calc(100svh - 60px);
+  }
+  .map-toolbar {
+    top: 7px;
+    inset-inline-start: 14px;
+    gap: 6px;
+    padding: 4px;
+  }
+  .map-toolbar label,
+  .map-quiet-link {
+    min-height: 40px;
+    height: 40px;
+  }
+  .map-toolbar input {
+    width: min(220px, 30vw);
+  }
+  .filter-row {
+    display: flex;
+    max-width: 42vw;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .filter-row::-webkit-scrollbar {
+    display: none;
+  }
+  .filter-row button {
+    min-height: 40px;
+    padding-inline: 8px;
+    white-space: nowrap;
+  }
+  .canvas-depth-label {
+    top: 42px;
+  }
+  .map-panel {
+    top: 64px;
+    bottom: 10px;
+    width: min(300px, 37vw);
+    max-height: none;
+    padding: 14px;
+    padding-inline-end: 54px;
+    border-radius: 16px;
+    overflow-y: auto;
+  }
+  .map-panel h2 {
+    margin: 5px 0;
+    font-size: calc(20px * var(--text-scale));
+  }
+  .map-panel p {
+    margin: 10px 0 4px;
+    font-size: calc(12px * var(--text-scale));
+  }
+  .map-panel > small {
+    font-size: calc(10px * var(--text-scale));
+  }
+  .map-panel .cta {
+    min-height: 42px;
+    margin-top: 10px;
+    font-size: calc(11px * var(--text-scale));
+  }
+  .panel-close {
+    width: 40px;
+    height: 40px;
+  }
+  .map-controls {
+    inset-inline-start: 14px;
+    bottom: 10px;
+    grid-template-columns: repeat(3, 40px);
+  }
+  .map-controls button {
+    width: 40px;
+    height: 40px;
+  }
+  .map-minimap {
+    inset-inline-start: 14px;
+    inset-inline-end: auto;
+    top: 64px;
+    bottom: auto;
+    width: 68px;
+    height: 146px;
+  }
+  .map-minimap svg {
+    height: 111px;
+  }
+  .map-minimap span {
+    padding-top: 6px;
+  }
+
+  .journey-centered,
+  .scene-layout,
+  .choice-layout,
+  .outcome-layout,
+  .support-layout,
+  .guardian-layout {
+    min-height: calc(100svh - 60px);
+    max-height: calc(100svh - 60px);
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    padding: 0 clamp(18px, 5vw, 44px) 18px;
+  }
+  .journey-title {
+    padding-top: 7px;
+  }
+  .journey-title > span {
+    font-size: calc(8px * var(--text-scale));
+  }
+  .journey-title h1 {
+    font-size: calc(20px * var(--text-scale));
+    line-height: 1.2;
+  }
+  .mystery-card {
+    width: min(620px, 82vw);
+    margin-top: 12px;
+    padding: 16px;
+    gap: 14px;
+    grid-template-columns: 62px 1fr;
+  }
+  .mystery-mark {
+    width: 58px;
+    height: 58px;
+    font-size: calc(30px * var(--text-scale));
+  }
+  .mystery-card h2 {
+    margin: 2px 0;
+    font-size: calc(20px * var(--text-scale));
+  }
+  .mystery-card p {
+    margin: 3px 0;
+    font-size: calc(11px * var(--text-scale));
+  }
+  .mystery-card .cta,
+  .scene-layout > .cta,
+  .choice-layout > .cta {
+    min-height: 42px;
+  }
+  .scene-layout .journey-title {
+    margin-bottom: 5px;
+  }
+  .cinema-frame {
+    width: min(620px, 72vw, 47svh);
+    margin-top: 4px;
+    border-radius: 16px;
+  }
+  .caption {
+    bottom: 44px;
+    max-width: min(360px, 62vw);
+    padding: 7px 10px;
+  }
+  .caption p,
+  .caption span {
+    font-size: calc(9px * var(--text-scale));
+  }
+  .video-controls {
+    height: 38px;
+    padding-inline: 12px;
+    gap: 9px;
+  }
+  .video-controls span,
+  .video-controls b {
+    font-size: calc(9px * var(--text-scale));
+  }
+  .question-hint {
+    margin: 2px 0 8px;
+    font-size: calc(10px * var(--text-scale));
+  }
+  .choice-grid {
+    width: min(940px, 88vw);
+    gap: 10px;
+  }
+  .choice-card,
+  .behavior-card {
+    min-height: 142px;
+    padding: 12px;
+  }
+  .choice-card > i,
+  .behavior-icon {
+    height: 32px;
+    margin: 3px 0 5px;
+    font-size: calc(27px * var(--text-scale));
+  }
+  .choice-card h2,
+  .behavior-card h2 {
+    font-size: calc(17px * var(--text-scale));
+    margin: 2px 0;
+  }
+  .choice-card p {
+    margin: 2px 0;
+    font-size: calc(10px * var(--text-scale));
+    line-height: 1.4;
+  }
+  .choice-index,
+  .tag {
+    font-size: calc(8px * var(--text-scale));
+  }
+  .radio {
+    width: 20px;
+    height: 20px;
+    inset-inline-start: 12px;
+    bottom: 12px;
+  }
+  .outcome-copy {
+    width: min(620px, 78vw);
+    margin-top: 8px;
+    padding: 14px 18px;
+  }
+  .outcome-copy h2 {
+    margin: 3px 0;
+    font-size: calc(20px * var(--text-scale));
+  }
+  .outcome-copy > p,
+  .outcome-copy label {
+    font-size: calc(11px * var(--text-scale));
+  }
+  .outcome-copy textarea {
+    height: 54px;
+    margin-top: 4px;
+  }
+
+  .calm-layout {
+    min-height: calc(100svh - 60px);
+    padding: 0 clamp(18px, 5vw, 42px);
+  }
+  .calm-copy {
+    top: 12px;
+    inset-inline-end: 5vw;
+    width: min(265px, 31vw);
+  }
+  .calm-copy h1 {
+    margin: 3px 0;
+    font-size: calc(25px * var(--text-scale));
+  }
+  .calm-copy h2 {
+    margin: 0 0 3px;
+    font-size: calc(14px * var(--text-scale));
+  }
+  .calm-copy p {
+    font-size: calc(10px * var(--text-scale));
+    line-height: 1.45;
+  }
+  .breathing-experience {
+    top: 54%;
+    left: auto;
+    inset-inline-start: 38%;
+    width: min(340px, 42vw);
+  }
+  .breathing-ring {
+    width: 138px;
+  }
+  .breathing-idle > span {
+    font-size: calc(25px * var(--text-scale));
+  }
+  .breathing-active small {
+    font-size: calc(11px * var(--text-scale));
+  }
+  .breathing-active strong {
+    font-size: calc(43px * var(--text-scale));
+  }
+  .breathing-progress {
+    margin-top: 12px;
+  }
+  .breathing-progress > span {
+    min-height: 29px;
+    font-size: calc(7px * var(--text-scale));
+  }
+  .breathing-progress i {
+    width: 15px;
+    height: 15px;
+  }
+  .breathing-controls {
+    min-height: 40px;
+    margin-top: 7px;
+  }
+  .breathing-controls .cta,
+  .breath-control {
+    min-height: 40px;
+    min-width: 100px;
+    padding-inline: 11px;
+    font-size: calc(9px * var(--text-scale));
+  }
+  .calm-navigation {
+    inset-inline-end: 5vw;
+    bottom: 10px;
+  }
+  .calm-navigation button {
+    height: 38px;
+    font-size: calc(9px * var(--text-scale));
+  }
+  .support-layout-new {
+    height: calc(100svh - 60px);
+    min-height: calc(100svh - 60px);
+    overflow: hidden;
+    padding: 0;
+  }
+  .support-sheet {
+    position: absolute;
+    inset-inline-end: clamp(18px, 5vw, 46px);
+    top: 64px;
+    bottom: 10px;
+    max-height: none;
+    width: min(470px, 48vw);
+    padding: 14px;
+    overflow-y: auto;
+  }
+  .support-sheet h1 {
+    font-size: calc(23px * var(--text-scale));
+  }
+  .support-sheet > p,
+  .support-detail p {
+    font-size: calc(10px * var(--text-scale));
+  }
+  .support-actions button {
+    min-height: 40px;
+  }
+  .support-quiet-note {
+    inset-inline-start: clamp(18px, 5vw, 46px);
+    bottom: 12px;
+    max-width: min(240px, 31vw);
+    font-size: calc(10px * var(--text-scale));
+  }
+}
